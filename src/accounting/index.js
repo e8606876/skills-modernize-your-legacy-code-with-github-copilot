@@ -2,6 +2,13 @@
 
 const readline = require('readline');
 
+// Operation type constants (mirror the 6-character codes used in the COBOL CALL statements)
+const OPERATION_TYPES = {
+  VIEW_BALANCE: 'TOTAL ',
+  CREDIT: 'CREDIT',
+  DEBIT: 'DEBIT ',
+};
+
 // ---------------------------------------------------------------------------
 // DataProgram — in-memory balance persistence (mirrors data.cob)
 // ---------------------------------------------------------------------------
@@ -25,10 +32,10 @@ async function operations(operationType, rl) {
   const ask = (prompt) =>
     new Promise((resolve) => rl.question(prompt, (answer) => resolve(answer)));
 
-  if (operationType === 'TOTAL ') {
+  if (operationType === OPERATION_TYPES.VIEW_BALANCE) {
     const balance = data.read();
     console.log(`Current balance: ${balance.toFixed(2)}`);
-  } else if (operationType === 'CREDIT') {
+  } else if (operationType === OPERATION_TYPES.CREDIT) {
     const input = await ask('Enter credit amount: ');
     const amount = parseFloat(input);
     if (isNaN(amount) || amount < 0) {
@@ -39,7 +46,7 @@ async function operations(operationType, rl) {
     const newBalance = balance + amount;
     data.write(newBalance);
     console.log(`Amount credited. New balance: ${newBalance.toFixed(2)}`);
-  } else if (operationType === 'DEBIT ') {
+  } else if (operationType === OPERATION_TYPES.DEBIT) {
     const input = await ask('Enter debit amount: ');
     const amount = parseFloat(input);
     if (isNaN(amount) || amount < 0) {
@@ -84,13 +91,13 @@ async function main() {
 
     switch (choice.trim()) {
       case '1':
-        await operations('TOTAL ', rl);
+        await operations(OPERATION_TYPES.VIEW_BALANCE, rl);
         break;
       case '2':
-        await operations('CREDIT', rl);
+        await operations(OPERATION_TYPES.CREDIT, rl);
         break;
       case '3':
-        await operations('DEBIT ', rl);
+        await operations(OPERATION_TYPES.DEBIT, rl);
         break;
       case '4':
         continueFlag = false;
@@ -105,7 +112,7 @@ async function main() {
 }
 
 // Export for testing
-module.exports = { data, operations };
+module.exports = { data, operations, OPERATION_TYPES };
 
 // Run the application when executed directly
 if (require.main === module) {
