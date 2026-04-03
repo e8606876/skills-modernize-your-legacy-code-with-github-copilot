@@ -99,3 +99,53 @@ Provides in-memory persistence for the account balance. Acts as a simple data la
 | Maximum balance / transaction amount is $999,999.99 | All files — `PIC 9(6)V99` picture clause |
 | Menu loops until user selects Exit (option 4) | `main.cob` — `PERFORM UNTIL CONTINUE-FLAG = 'NO'` |
 | Invalid menu choices are handled gracefully | `main.cob` — `WHEN OTHER` in `EVALUATE` |
+
+---
+
+## Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Main as MainProgram<br/>(main.cob)
+    participant Ops as Operations<br/>(operations.cob)
+    participant Data as DataProgram<br/>(data.cob)
+
+    User->>Main: Start program
+    loop Menu loop (until Exit)
+        Main->>User: Display menu (1=View, 2=Credit, 3=Debit, 4=Exit)
+        User->>Main: Enter choice
+
+        alt Choice 1 — View Balance
+            Main->>Ops: CALL 'Operations' WITH 'TOTAL '
+            Ops->>Data: CALL 'DataProgram' WITH 'READ'
+            Data-->>Ops: Return STORAGE-BALANCE
+            Ops-->>Main: Display current balance
+        else Choice 2 — Credit Account
+            Main->>Ops: CALL 'Operations' WITH 'CREDIT'
+            User->>Ops: Enter credit amount
+            Ops->>Data: CALL 'DataProgram' WITH 'READ'
+            Data-->>Ops: Return STORAGE-BALANCE
+            Ops->>Ops: Add amount to balance
+            Ops->>Data: CALL 'DataProgram' WITH 'WRITE' (new balance)
+            Ops-->>Main: Display new balance
+        else Choice 3 — Debit Account
+            Main->>Ops: CALL 'Operations' WITH 'DEBIT '
+            User->>Ops: Enter debit amount
+            Ops->>Data: CALL 'DataProgram' WITH 'READ'
+            Data-->>Ops: Return STORAGE-BALANCE
+            alt Sufficient funds (balance >= amount)
+                Ops->>Ops: Subtract amount from balance
+                Ops->>Data: CALL 'DataProgram' WITH 'WRITE' (new balance)
+                Ops-->>Main: Display new balance
+            else Insufficient funds
+                Ops-->>Main: Display "Insufficient funds" message
+            end
+        else Choice 4 — Exit
+            Main->>Main: Set CONTINUE-FLAG = 'NO'
+        else Invalid choice
+            Main->>User: Display error, re-show menu
+        end
+    end
+    Main->>User: Program ends
+```
